@@ -1,0 +1,2 @@
+class APIConectionError(Exception):
+    pass
