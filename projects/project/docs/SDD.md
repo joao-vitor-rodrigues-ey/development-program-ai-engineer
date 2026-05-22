@@ -1,7 +1,5 @@
 # Solution Design Document (SDD)
 
-*Este documento detalhará o design da solução para cada projeto.*
-
 ## Objetivo
  Construir um serviço especialista em formato de API REST que simula um analista de compliance, fornecendo análise automatizada de recomendações de investimento usando LLM.
 
