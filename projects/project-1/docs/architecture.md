@@ -19,3 +19,10 @@ Contém a lógica do negócio isolada da camada http. A função 'analyze_text' 
 Centraliza a configuração do cliente Azure OpenAi ('llm_client.py)e as exceções customizadas('exceptions.py').
 
 ## Componentes
+│ Componente │  Responsabilidade
+│  --- │ ---- │ 
+│ 'main.py' │  Ponto de entrada da API, define os endpoints │ 
+│ 'api/schemas/analysis.py │ Contratos de request e response │   
+│ 'services/compliance_service.py' │ Lógica de analise de compliance │ 
+│ 'core/llm_client.py' │ Conexão com Azure OpenAI │
+│ 'core/exceptions.py' │ Exceções Customizadas │
