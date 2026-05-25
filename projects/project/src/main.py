@@ -4,10 +4,12 @@ from src.services.compliance_service import analyze_text
 from src.core.exceptions import APIConectionError
  
 app= FastAPI()
-
+# Endpoint de Health check, verifica se a API está no ar
 @app.get("/health")
 def health():
     return {"status":"ok"}
+
+# Endpoint principal de análise, recebe um texto e retorna a análise de conformidade
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_recomendation(request: AnalysisRequest):
     try:

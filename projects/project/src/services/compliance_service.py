@@ -3,17 +3,21 @@ from src.core.exceptions import APIConectionError
 from src.api.schemas.analysis import AnalysisRequest, AnalysisResponse
 
 def analyze_text(text_to_analyze:str) -> AnalysisResponse:
+    # INstancai o cliente, credenciais carregadas de um .env automaticamente
     llm_client = AzureModel()
 
+# monta o prompt estruturado para guiar o modelo
     prompt = f"""
     Analise a seguinte recomendação de investimento :'{text_to_analyze}'.
     Verifique se ela está em conformidade com as regulamentações de compliance.
     retorne sua análise explicando o motivo e cite os produtos mencionados.
     """ 
     try:
+        # Chama o LLM e extrai o contéudo da resposta
         response = llm_client.invoke(prompt=prompt)
         raw_content = response.choices[0].message.content
 
+        # Interpreta a resposta do modelo para determinar conformidade e produtos mencionados
         return AnalysisResponse(
             is_compliant="não" not in raw_content.lower(),
             reason=raw_content,
