@@ -26,6 +26,8 @@ class SimpleEmbedding(EmbeddingFunction):
 # Caminho para a knowledge base
 KNOWLEDGE_BASE_PATH = Path(__file__).parent.parent.parent / "knowledge_base"
 CHROMA_DB_PATH = Path(__file__).parent.parent.parent / "data" / "chroma_db"
+print(f"salvando em: {CHROMA_DB_PATH.absolute()}")
+
 def load_documents() ->list[dict]:
     """ Le todos os TXTs da pasta KNOWLEDGE_BASE e extrai o texto para uma lista de dicionários."""
     documents =[]
@@ -60,7 +62,6 @@ def ingest():
 
     # Inicializa o ChromaDB
     client = chromadb.PersistentClient(path=str(CHROMA_DB_PATH))
-
     #Apaga a coleção antiga se existir
     try:
         client.delete_collection("compliance_docs")

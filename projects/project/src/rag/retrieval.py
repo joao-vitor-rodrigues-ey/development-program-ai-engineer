@@ -2,7 +2,8 @@ from pathlib import Path
 import chromadb
 import numpy as np
 
-CHROMA_DB_PATH = Path(__file__).parent / "data" / "chroma_db"
+BASE_PATH = Path(__file__).parent.parent
+CHROMA_DB_PATH = Path(__file__).parent.parent.parent / "data" / "chroma_db"
 
 def text_to_vector(text: str, dim: int = 128) -> list[float]:
     """Converte texto em vetor numérico sem modelo externo."""
@@ -22,6 +23,9 @@ def retrieve(query: str, n_results: int = 5) -> list[dict]:
     
     query_embedding = text_to_vector(query)
     
+    print(f"caminho do banco: {CHROMA_DB_PATH.absolute()}")
+    print(f"Banco existe: {CHROMA_DB_PATH.exists()}")
+    print(f"total de chunks no banco: {collection.count()}")
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=n_results
