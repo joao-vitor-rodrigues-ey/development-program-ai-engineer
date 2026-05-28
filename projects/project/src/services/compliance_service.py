@@ -1,28 +1,47 @@
 from src.core.llm_client import AzureModel
 from src.core.exceptions import APIConectionError
-from src.api.schemas.analysis import AnalysisRequest, AnalysisResponse
+from src.api.schemas.analysis import AnalysisResponse
+from src.rag.retrieval import retrieve
 
-def analyze_text(text_to_analyze:str) -> AnalysisResponse:
-    # INstancai o cliente, credenciais carregadas de um .env automaticamente
+def analyze_text(text_to_analyze :str) -> AnalysisResponse:
+    """Analisa uma recomendação de investimento usando RAG + LLM."""
+
+    #busca os chunks mais relevantes da knowledge base
+    
+    relevant_chunks = retrieve(text_to_analyze, n_results=3)
+
+    # Monta o contexto com os documentos recuperados
+    context = "/n/n".join([
+        f"Fonte: {chunk['source']} /n{chunk['content']}"
+        for chunk in relevant_chunks
+    ])
+
+    # Extrai as fontes usadas
+    sources = list(set({chunk['source'] for chunk in relevant_chunks}))
+
+    #instancia o cliente LLM
     llm_client = AzureModel()
 
-# monta o prompt estruturado para guiar o modelo
+    # Prompt enriquecido com contexto das politicas
     prompt = f"""
-    Analise a seguinte recomendação de investimento :'{text_to_analyze}'.
-    Verifique se ela está em conformidade com as regulamentações de compliance.
+    Você é um analista de compliance financeiro.
+    Com base nos seguintes documentos de política:
+    {context}
+
+    analisa a seguinte recomendação de investimento: '{text_to_analyze}'.
+    Verifique se ela est[a em conformidade com as politicas acima.
     retorne sua análise explicando o motivo e cite os produtos mencionados.
-    """ 
-    try:
-        # Chama o LLM e extrai o contéudo da resposta
+    """
+
+    try: 
         response = llm_client.invoke(prompt=prompt)
         raw_content = response.choices[0].message.content
 
-        # Interpreta a resposta do modelo para determinar conformidade e produtos mencionados
         return AnalysisResponse(
-            is_compliant="não" not in raw_content.lower(),
-            reason=raw_content,
-            mentioned_products=[]
+        is_compliant= "não" not in raw_content.lower(),
+        reason=raw_content,
+        mentioned_products=sources
         )
+
     except Exception as e:
-        raise APIConectionError(f"Falha ao conectar com o serviço de análise: (e)")
-    
+        raise APIConectionError(f"Falha ao conectar com o serviço de análise: {e}")

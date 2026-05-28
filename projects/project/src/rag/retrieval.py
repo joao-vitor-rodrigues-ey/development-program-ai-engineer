@@ -2,7 +2,7 @@ from pathlib import Path
 import chromadb
 import numpy as np
 
-CHROMA_DB_PATH = Path("projects/project/data/chroma_db")
+CHROMA_DB_PATH = Path(__file__).parent / "data" / "chroma_db"
 
 def text_to_vector(text: str, dim: int = 128) -> list[float]:
     """Converte texto em vetor numérico sem modelo externo."""
