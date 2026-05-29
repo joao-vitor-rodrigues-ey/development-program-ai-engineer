@@ -2,22 +2,23 @@ from src.core.llm_client import AzureModel
 from src.core.exceptions import APIConectionError
 from src.api.schemas.analysis import AnalysisResponse
 from src.rag.retrieval import retrieve
-
+from src.rag.reranker import simple_rerank
 def analyze_text(text_to_analyze :str) -> AnalysisResponse:
     """Analisa uma recomendação de investimento usando RAG + LLM."""
 
     #busca os chunks mais relevantes da knowledge base
     
     relevant_chunks = retrieve(text_to_analyze, n_results=3)
+    relevant_chunks = simple_rerank(text_to_analyze, relevant_chunks)
 
     # Monta o contexto com os documentos recuperados
-    context = "/n/n".join([
-        f"Fonte: {chunk['source']} /n{chunk['content']}"
+    context = "\n\n".join([
+        f"Fonte: {chunk['source']} \n{chunk['content']}"
         for chunk in relevant_chunks
     ])
 
     # Extrai as fontes usadas
-    sources = list(set({chunk['source'] for chunk in relevant_chunks}))
+    sources = list(([chunk['source'] for chunk in relevant_chunks]))
 
     #instancia o cliente LLM
     llm_client = AzureModel()
@@ -40,8 +41,12 @@ def analyze_text(text_to_analyze :str) -> AnalysisResponse:
         return AnalysisResponse(
         is_compliant= "não" not in raw_content.lower(),
         reason=raw_content,
-        mentioned_products=sources
+        mentioned_products=sources,
+        source_documents=sources
         )
 
     except Exception as e:
+        print(f"ERRO DETALHADO: {e}")
+        import traceback
+        traceback.print_exc()
         raise APIConectionError(f"Falha ao conectar com o serviço de análise: {e}")
