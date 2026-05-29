@@ -40,7 +40,8 @@ def analyze_text(text_to_analyze :str) -> AnalysisResponse:
         return AnalysisResponse(
         is_compliant= "não" not in raw_content.lower(),
         reason=raw_content,
-        mentioned_products=sources
+        mentioned_products=sources,
+        source_chunk_id=[chunk['chunk_id'] for chunk in relevant_chunks]
         )
 
     except Exception as e:

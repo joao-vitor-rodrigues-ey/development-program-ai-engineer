@@ -10,3 +10,4 @@ class AnalysisResponse(BaseModel):
     is_compliant: bool= Field(...,description="Indica se a recomendação está em conformidade.")
     reason:     str = Field(...,description="Justificativa detalhada da análise.")
     mentioned_products: List[str] = Field(...,description="Lista de produtos mencionados .")
+    source_chunk_id: List[int] = Field([], description="IDs dos chunks da base de conhecimento usados na análise.")
