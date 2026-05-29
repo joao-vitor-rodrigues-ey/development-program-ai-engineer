@@ -26,13 +26,11 @@ class SimpleEmbedding(EmbeddingFunction):
 # Caminho para a knowledge base
 KNOWLEDGE_BASE_PATH = Path(__file__).parent.parent.parent / "knowledge_base"
 CHROMA_DB_PATH = Path(__file__).parent.parent.parent / "data" / "chroma_db"
-print(f"salvando em: {CHROMA_DB_PATH.absolute()}")
 
 def load_documents() ->list[dict]:
     """ Le todos os TXTs da pasta KNOWLEDGE_BASE e extrai o texto para uma lista de dicionários."""
     documents =[]
     print(f"Procurando em: {KNOWLEDGE_BASE_PATH.absolute()}")
-    print(f"Existe: {KNOWLEDGE_BASE_PATH.exists()}")
     for txt_file in KNOWLEDGE_BASE_PATH.glob("*.txt"):
         with open(txt_file, "r", encoding="utf-8") as f:
             text = f.read()

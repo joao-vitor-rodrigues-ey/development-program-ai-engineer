@@ -23,9 +23,6 @@ def retrieve(query: str, n_results: int = 5) -> list[dict]:
     
     query_embedding = text_to_vector(query)
     
-    print(f"caminho do banco: {CHROMA_DB_PATH.absolute()}")
-    print(f"Banco existe: {CHROMA_DB_PATH.exists()}")
-    print(f"total de chunks no banco: {collection.count()}")
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=n_results
