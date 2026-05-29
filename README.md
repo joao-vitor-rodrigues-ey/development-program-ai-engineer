@@ -1,140 +1,161 @@
-reni# Programa de Aprendizado – Engenheiro de IA 🤖
+# Development Program AI Engineer
 
-**IA Generativa, Agentes Inteligentes e Engenharia de Software para Produção**
+API REST de análise de compliance financeiro com RAG (Retrieval-Augmented Generation), construída como parte do programa de desenvolvimento interno da EY.
 
-## Visão Geral
+## Sobre o Projeto
 
-Bem-vindo ao repositório do **Programa de Formação para Engenheiros de IA**. Nossa filosofia é simples: **não criamos protótipos, construímos soluções**. Este programa foi desenhado para preparar profissionais para atuar em desafios reais de IA generativa em ambiente corporativo, com foco em arquiteturas escaláveis, agentes inteligentes e engenharia de sistemas prontos para performar.
+O sistema simula um analista de compliance financeiro. Ele recebe uma recomendação de investimento, busca trechos relevantes da base de conhecimento oficial e usa um LLM (Azure OpenAI) para analisar se a recomendação está em conformidade com as políticas internas.
 
-O objetivo é ir além do código, conectando decisões técnicas a um impacto de negócio mensurável.
+## Arquitetura
 
-## 🎯 Público-Alvo
-
-Este programa é ideal para **engenheiros de software, dados ou back-end com experiência em Python** que desejam se especializar na construção de sistemas de IA generativa de ponta a ponta, desde a concepção até a preparação para o ambiente de produção.
-
-## 💡 Nossa Metodologia: O Ciclo de Maestria em IA
-
-Adotamos um ciclo de aprendizado ativo para garantir um desenvolvimento profundo e multifacetado.
-
--   **Aprender (Learn):** Focar nos conceitos teóricos com o suporte do nosso *Learning Path* e da documentação oficial. O objetivo é entender o "porquê" por trás de cada tecnologia.
--   **Construir (Build):** Aplicar o conhecimento na prática, desenvolvendo os três projetos principais. Aqui, a teoria se transforma em código funcional e soluções tangíveis.
--   **Apresentar (Present):** Criar artefatos que demonstrem o valor da solução, como a interface interativa com Streamlit. A capacidade de apresentar o trabalho é crucial.
--   **Defender (Defend):** Justificar as escolhas técnicas e de arquitetura nos documentos de decisão (`docs/decisions.md`). Esta é a habilidade de um engenheiro experiente: comunicar e defender suas soluções com base em fundamentos sólidos.
-
-## 🎯 Cenário de Negócio: O Desafio do Compliance no Setor Financeiro
-
-Este programa é construído em torno de um caso de uso real e de alto valor no setor financeiro (FSO - Financial Services Office): **a automação da análise de conformidade para recomendações de investimento**.
-
-**A Dor:** Analistas de compliance são um recurso sênior e caro. Eles gastam um tempo enorme revisando manualmente as comunicações entre consultores de investimento e clientes para garantir que as recomendações estejam adequadas ao perfil de risco de cada investidor e sigam as regulamentações do mercado (CVM, ANBIMA). Este processo é:
-- **Lento:** Atrasando a comunicação com o cliente.
-- **Caro:** Utilizando horas de especialistas em tarefas repetitivas.
-- **Sujeito a Falhas:** O cansaço e o volume podem levar a erros humanos.
-- **Não Escalável:** É impossível revisar 100% das interações em tempo real.
-
-**A Nossa Missão:** Construir uma solução de IA que evolui em três fases para resolver este problema, transformando um processo manual em um sistema inteligente e autônomo.
-
-## 🚀 A Jornada do Engenheiro de IA: Do Serviço à Autonomia
-
-Nossa metodologia é uma jornada progressiva. Cada projeto constrói sobre o anterior, culminando em uma solução completa e robusta.
-
-```mermaid
-graph TD
-    subgraph "Ponto de Partida"
-        A[Engenheiro de<br>Software/Dados]
-    end
-
-    subgraph "Projeto 1: Serviço Especialista"
-        B(API de Análise de Conformidade)
-        B_Desc["Recebe um texto e<br>retorna uma análise<br>básica do LLM."]
-        B_Techs["- Python & FastAPI<br>- Pydantic Schemas<br>- Prompt Engineering<br>- Docker"]
-    end
-
-    subgraph "Projeto 2: Especialista com Memória"
-        C(API com RAG)
-        C_Desc["Conecta a API a uma<br>base de conhecimento<br>com regras da CVM e ANBIMA."]
-        C_Techs["- Vector DBs<br>- Chunking Semântico<br>- Retrieval & Re-ranking<br>- Grounding"]
-    end
-
-    subgraph "Projeto 3: Agente Autônomo"
-        D(Agente de Compliance)
-        D_Desc["Orquestra o fluxo: monitora,<br>analisa com a API RAG,<br>registra e notifica."]
-        D_Techs["- LangGraph / FastMCP<br>- Orquestração Multi-step<br>- Tool Calling<br>- LLMOps (Observabilidade)"]
-    end
-
-    subgraph "Ponto de Chegada"
-        E[Engenheiro de IA<br>Full-Stack]
-    end
-
-    A --> B --> C --> D --> E
-    B -- Evolui para --> C
-    C -- Vira ferramenta para --> D
-    
-    B --- B_Techs
-    C --- C_Techs
-    D --- D_Techs
-
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style E fill:#bbf,stroke:#333,stroke-width:2px
+```
+Cliente → POST /analyze
+    → Busca chunks relevantes no ChromaDB
+    → Re-ranking por relevância
+    → Prompt enriquecido com contexto das políticas
+    → Azure OpenAI analisa
+    → Resposta com conformidade + fontes citadas
 ```
 
-## 🏅 O Perfil do Engenheiro de IA Moderno
+## Estrutura do Repositório
 
-Ao final do programa, o participante estará apto a atuar como um Engenheiro de IA completo, dominando habilidades técnicas e comportamentais.
+```
+development-program-ai-engineer/
+├── projects/
+│   └── project/
+│       ├── .env                          # Credenciais Azure OpenAI (não versionado)
+│       ├── .gitignore
+│       ├── Dockerfile
+│       ├── README.md
+│       ├── requirements.txt
+│       ├── knowledge_base/
+│       │   ├── analise_de_perfil_do_investidor.txt
+│       │   ├── email_analise_cliente_01.txt
+│       │   ├── manual_comunicacao_cliente_v1.0.txt
+│       │   ├── politica_adequacao_investimento_v1.2.txt
+│       │   └── politica_investimento_agressivo_v1.0.txt
+│       ├── notebooks/
+│       │   └── rag_evaluation.ipynb
+│       ├── src/
+│       │   ├── main.py
+│       │   ├── api/schemas/analysis.py
+│       │   ├── core/
+│       │   │   ├── llm_client.py
+│       │   │   └── exceptions.py
+│       │   ├── rag/
+│       │   │   ├── ingestion.py
+│       │   │   ├── retrieval.py
+│       │   │   └── reranker.py
+│       │   └── services/
+│       │       └── compliance_service.py
+│       ├── tests/
+│       │   ├── test_api.py
+│       │   └── test_services.py
+│       └── docs/
+│           ├── architecture.md
+│           ├── decisions.md
+│           └── SDD.md
+└── apresentation/
+```
 
-### Hard Skills Desenvolvidas
-- **Desenvolvimento de Backend:** Construção de APIs robustas com Python, FastAPI e Pydantic.
-- **Arquitetura de IA:** Design e implementação de sistemas RAG, incluindo ingestão, indexação e recuperação otimizada.
-- **Agentes Autônomos:** Orquestração de fluxos de trabalho complexos com LangGraph, gerenciamento de estado e uso de ferramentas.
-- **Engenharia de Software:** Conteinerização com Docker, escrita de testes e documentação técnica.
-- **LLMOps & Observabilidade:** Instrumentação de código para monitoramento de performance, custo e comportamento de sistemas de IA em produção.
+## Como Rodar
 
-### Soft Skills Essenciais
-- **Resolução de Problemas:** Capacidade de traduzir uma dor de negócio em uma solução de IA viável e eficaz.
-- **Pensamento Crítico:** Análise de trade-offs entre diferentes abordagens técnicas (ex: qual a melhor estratégia de chunking para este caso?).
-- **Comunicação Técnica:** Habilidade de apresentar e defender decisões de arquitetura de forma clara e concisa.
-- **Visão de Produto:** Foco em construir soluções que não apenas funcionam, mas que geram valor de negócio mensurável.
+### Pré-requisitos
+- Python 3.11
+- Docker
+- Credenciais Azure OpenAI no `.env`
 
-## 🗂️ Guia Rápido dos Projetos
+### 1. Instalar dependências
+```bash
+cd projects/project
+pip install -r requirements.txt
+```
 
-Use a tabela abaixo para navegar diretamente para o guia de cada projeto.
+### 2. Configurar o `.env`
+```
+AZURE_OPENAI_ENDPOINT="seu-endpoint"
+AZURE_OPENAI_KEY="sua-chave"
+AZURE_OPENAI_API_VERSION="2024-06-01"
+AZURE_DEPLOYMENT_NAME="seu-deployment"
+```
 
-| Fase do Programa | Objetivo do Projeto | Link Direto para o Guia |
-| :--- | :--- | :--- |
-| **Projeto 1** | Construir uma API REST com LLM | [**Guia do Projeto 1**](./projects/project-1/README.md) |
-| **Projeto 2** | Adicionar uma base de conhecimento (RAG) | [**Guia do Projeto 2**](./projects/project-2/README.md) |
-| **Projeto 3** | Automatizar o fluxo com um Agente | [**Guia do Projeto 3**](./projects/project-3/README.md) |
+### 3. Rodar a ingestão
+```bash
+python projects/project/src/rag/ingestion.py
+```
 
-## 🚦 Como Começar a Desenvolver
+### 4. Subir a API
+```bash
+cd projects/project
+uvicorn src.main:app --reload
+```
 
-1.  **Acesse a pasta do Projeto 1:** `cd projects/project-1`.
-2.  **Siga as instruções** no `README.md` dentro da pasta para configurar o ambiente e começar a desenvolver.
-3.  Ao concluir o Projeto 1, você continuará a evoluir o código que você mesmo criou para o Projeto 2, e assim por diante.
+Acesse a documentação em: http://127.0.0.1:8000/docs
 
-> **Dica:** A melhor abordagem é criar seu próprio repositório Git e copiar a estrutura de pastas de `projects/project-1` para lá. Assim, você constrói sua própria versão da solução do zero.
+### 5. Com Docker
+```bash
+cd projects/project
+docker build -t compliance-checker .
+docker run -p 8000:8000 --env-file .env compliance-checker
+```
 
----
+## Endpoints
 
-## 🔗 Recursos e Documentação (Learning Path)
+### GET /health
+```json
+{"status": "ok"}
+```
 
-### Documentação Oficial (Nossa Fonte da Verdade)
-Para referências técnicas e detalhes de implementação, consulte sempre a documentação oficial:
+### POST /analyze
 
-- **Python:** [Documentação Oficial do Python 3](https://docs.python.org/3/)
-- **FastAPI:** [Tutorial do FastAPI](https://fastapi.tiangolo.com/tutorial/) - Essencial para os Projetos 1 e 2.
-- **Pydantic:** [Documentação do Pydantic V2](https://docs.pydantic.dev/latest/) - Fundamental para validação de dados.
-- **Docker:** [Visão Geral do Docker](https://docs.docker.com/get-started/overview/)
-- **LangChain:** [Documentação da LangChain para Python](https://python.langchain.com/docs/get_started/introduction) - Base para os Projetos 2 e 3.
-- **LangGraph:** [Introdução ao LangGraph](https://langchain-ai.github.io/langgraph/) - O coração do nosso agente no Projeto 3.
-- **Streamlit:** [Documentação do Streamlit](https://docs.streamlit.io/) - Para a criação da interface de demonstração.
-- **OpenTelemetry:** [Documentação do OpenTelemetry](https://opentelemetry.io/docs/) - Para o desafio de observabilidade.
+**Request:**
+```json
+{
+  "text_to_analyze": "Recomendo investir em ações de alto risco para perfil conservador."
+}
+```
 
-### Guias Conceituais e Tutoriais (Aprofundando o "Porquê")
-Para entender os conceitos por trás das ferramentas, estes recursos são um ótimo ponto de partida:
+**Response:**
+```json
+{
+  "is_compliant": false,
+  "reason": "A recomendação não está em conformidade com as políticas...",
+  "mentioned_products": ["politica_adequacao_investimento_v1.2.txt"],
+  "source_documents": ["politica_adequacao_investimento_v1.2.txt"]
+}
+```
 
-- **Engenharia de Prompts:** [Guia de Engenharia de Prompt](https://www.promptingguide.ai/pt/introduction) - Um guia completo sobre técnicas de prompting, desde o básico até o avançado.
-- **Arquitetura RAG:** [O que é RAG? (Pinecone)](https://www.pinecone.io/learn/retrieval-augmented-generation/) - Uma explicação clara e visual sobre o que é e por que usar a Geração Aumentada por Recuperação.
-- **Bancos de Dados Vetoriais:** [O que é um Banco de Dados Vetorial? (Elastic)](https://www.elastic.co/what-is/vector-database) - Desmistifica o conceito de embeddings e bancos de dados vetoriais.
-- **GitFlow e Versionamento:** [A Successful Git Branching Model](https://nvie.com/posts/a-successful-git-branching-model/) - O post clássico que introduziu o modelo GitFlow, essencial para trabalho em equipe.
-- **Conventional Commits:** [Especificação do Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) - Aprenda a escrever mensagens de commit claras e padronizadas.
+## Testes
+```bash
+cd projects/project
+python -m pytest tests/ -v
+```
 
+## Avaliação do Re-ranking
+```bash
+cd projects/project
+python -m jupyter notebook
+```
 
+Abre o notebook `notebooks/rag_evaluation.ipynb`.
+
+## Tecnologias
+| Tecnologia | Uso |
+|---|---|
+| Python 3.11 | Linguagem principal |
+| FastAPI | Framework da API |
+| Pydantic | Validação de dados |
+| Azure OpenAI | LLM para análise de compliance |
+| ChromaDB | Banco de dados vetorial local |
+| Instructor | Extração de dados estruturados |
+| pytest | Testes automatizados |
+| Docker | Containerização |
+
+## Padrão de Commits
+Seguimos o padrão Conventional Commits:
+- `feat` — nova funcionalidade
+- `fix` — correção de bug
+- `docs` — documentação
+- `refactor` — refatoração
+- `test` — testes
+- `chore` — tarefas de manutenção
