@@ -17,3 +17,12 @@ Pydantic garante que os contratos de request e response sejam validados automati
 
 ## Testes com Pytest
  Implementamos testes de integração com 'TestClient'.
+
+ ## ChromaDB como banco vetorial 
+ Escolhemos ChromaDB por ser uma solução local, sem necessidade de serviços externos. Como a rede corporativa da EY bloqueia downloads de modelos externos via SSL, implementamos uma função de embedding customizada  baseada em hash de caracteres, eliminando dependencias externas.
+
+ ## Re-ranking por palavras-chave
+ Implementamos um re-ranker simples baseado em contagem de palavras-chave em comum entre a query e o chunk, Essa abordagem nao requer modelo externo e demonstra o conceito de re-ranking de forma auditável e transparente.
+
+ ##Stritct Grounding 
+ O prompt foi estruturado para forçar o LLM a basear sua análise exclusivamente nos documentos recuperados, garantindo que as decisões sejam sempre rastreáveis às politicas oficiais.a
