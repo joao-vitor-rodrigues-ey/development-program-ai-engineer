@@ -1,87 +1,105 @@
-import ssl 
-import os 
+import os
+import pickle
+import numpy as np
 from pathlib import Path
-import chromadb
-from chromadb.utils import embedding_functions
+from dotenv import load_dotenv
+from openai import AzureOpenAI
+import time 
 
-ssl._create_default_https_context = ssl._create_unverified_context
-os.environ["PYTHONHTTPSVERIFY"] = "0"
+# Carrega as variáveis de ambiente do .env
+load_dotenv()
 
-from chromadb import EmbeddingFunction
-
-class SimpleEmbedding(EmbeddingFunction):
-    def __call__(self, input):
-        import numpy as np
-        result = []
-        for text in input:
-            vec = np.zeros(128, dtype=np.float32)
-            for i, char in enumerate(text):
-                vec[i % 128] += ord(char)
-            norm = np.linalg.norm(vec)
-            if norm > 0:
-                vec = vec / norm
-            result.append(vec.tolist())
-        return result
-
-# Caminho para a knowledge base
+# Caminhos base do projeto
 KNOWLEDGE_BASE_PATH = Path(__file__).parent.parent.parent / "knowledge_base"
-CHROMA_DB_PATH = Path(__file__).parent.parent.parent / "data" / "chroma_db"
-print(f"salvando em: {CHROMA_DB_PATH.absolute()}")
+DATA_PATH = Path(__file__).parent.parent.parent / "data"
 
-def load_documents() ->list[dict]:
-    """ Le todos os TXTs da pasta KNOWLEDGE_BASE e extrai o texto para uma lista de dicionários."""
-    documents =[]
-    print(f"Procurando em: {KNOWLEDGE_BASE_PATH.absolute()}")
-    print(f"Existe: {KNOWLEDGE_BASE_PATH.exists()}")
+# Inicializa o cliente Azure OpenAI
+client = AzureOpenAI(
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    api_key=os.getenv("AZURE_OPENAI_KEY"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION")
+)
+
+# Nome do deployment de embedding
+EMBEDDING_MODEL = os.getenv("AZURE_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002")
+
+
+def get_embedding(text: str) -> list:
+    """Gera o embedding semântico de um texto usando o Azure OpenAI."""
+    response = client.embeddings.create(
+        model=EMBEDDING_MODEL,
+        input=text
+    )
+    return response.data[0].embedding
+
+
+def load_documents() -> list[dict]:
+    """Lê todos os TXTs da pasta knowledge_base e retorna lista de documentos."""
+    documents = []
     for txt_file in KNOWLEDGE_BASE_PATH.glob("*.txt"):
         with open(txt_file, "r", encoding="utf-8") as f:
             text = f.read()
-
         documents.append({
             "filename": txt_file.name,
             "content": text
         })
-        print(f"Carregado {txt_file.name}")
+        print(f"Carregado: {txt_file.name}")
     return documents
 
-def chunk_text(text:str, chunk_size:int = 500,overlap: int = 59) -> list[str]:
-    """ divide o texto em chunks com sobreposição. """
+
+def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
+    """Divide o texto em chunks com sobreposição para não perder contexto nas bordas."""
     chunks = []
     start = 0
     while start < len(text):
         end = start + chunk_size
         chunks.append(text[start:end])
+        # Avança menos que o chunk_size pra garantir sobreposição
         start += chunk_size - overlap
     return chunks
 
+
 def ingest():
-    """ Pipeline completo de ingestão - lê os documentos, divide em chunks e armazena no chromaDB"""
+    """Pipeline completo de ingestão — lê, divide, gera embeddings semânticos e salva."""
     print("Iniciando processo de ingestão...")
-    # Usa embedding simples sem precisar baixar modelo
-    ef = embedding_functions.DefaultEmbeddingFunction()
+    DATA_PATH.mkdir(parents=True, exist_ok=True)
 
-    # Inicializa o ChromaDB
-    client = chromadb.PersistentClient(path=str(CHROMA_DB_PATH))
-    #Apaga a coleção antiga se existir
-    try:
-        client.delete_collection("compliance_docs")
-    except:
-        pass
-
-    collection =client.create_collection("compliance_docs",embedding_function=SimpleEmbedding())
-
-    #carrega os documentos 
     documents = load_documents()
 
-    #processa cada documento 
+    all_chunks = []
+    metadata = []
+    embeddings = []
+
     for doc in documents:
         chunks = chunk_text(doc["content"])
         for i, chunk in enumerate(chunks):
-            collection.add(
-                documents=[chunk],
-                metadatas=[{"source": doc["filename"], "chunk_id": i}],
-                ids= [f"{doc['filename']}_{i}"]
-            )
-    print(f"Ingestão concluída com sucesso.{collection.count()}chunks armazenados.")
-if __name__ == "__main__":   
-    ingest()  
+            print(f"Gerando embedding para chunk {i} de {doc['filename']}...")
+            
+            try:
+            # Gera embedding semântico via Azure OpenAI
+                embedding = get_embedding(chunk)
+            except Exception as e:
+                print(f"rate limite, aguardando 60 segundos...")
+                time.sleep(60)
+                embedding = get_embedding(chunk)
+
+            all_chunks.append(chunk)
+            embeddings.append(embedding)
+            metadata.append({
+                "source": doc["filename"],
+                "chunk_id": i,
+                "content": chunk
+            })
+
+    # Salva os chunks e metadados em pickle
+    with open(DATA_PATH / "chunks.pkl", "wb") as f:
+        pickle.dump({"chunks": all_chunks, "metadata": metadata}, f)
+
+    # Salva os embeddings em formato numpy para busca eficiente
+    np.save(str(DATA_PATH / "embeddings.npy"), np.array(embeddings))
+
+    print(f"Ingestão concluída! {len(all_chunks)} chunks armazenados.")
+
+
+if __name__ == "__main__":
+    ingest()

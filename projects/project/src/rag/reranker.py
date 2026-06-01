@@ -1,8 +1,8 @@
 import re
 from typing import List
 
+   # Re-rankeia os chunks por relevância baseado em palavras-chave em comum com a query.
 def simple_rerank(query: str, chunks: List[dict]) -> List[dict]:
-    """Re-rankeia os chunks por relevância baseado em palavras-chave em comum com a query."""
     
     query_words = set(re.findall(r'\w+', query.lower()))
     

@@ -1,43 +1,74 @@
-from pathlib import Path
-import chromadb
+import os
+import pickle
 import numpy as np
+from pathlib import Path
+from dotenv import load_dotenv
+from openai import AzureOpenAI
 
-BASE_PATH = Path(__file__).parent.parent
-CHROMA_DB_PATH = Path(__file__).parent.parent.parent / "data" / "chroma_db"
+# Carrega as variáveis de ambiente do .env
+load_dotenv()
 
-def text_to_vector(text: str, dim: int = 128) -> list[float]:
-    """Converte texto em vetor numérico sem modelo externo."""
-    vec = np.zeros(dim, dtype=np.float32)
-    for i, char in enumerate(text):
-        vec[i % dim] += ord(char)
-    norm = np.linalg.norm(vec)
-    if norm > 0:
-        vec = vec / norm
-    return vec.tolist()
+# Caminho base dos dados gerados pela ingestão
+DATA_PATH = Path(__file__).parent.parent.parent / "data"
 
-def retrieve(query: str, n_results: int = 5) -> list[dict]:
-    """Busca os chunks mais relevantes para a query no ChromaDB."""
-    
-    client = chromadb.PersistentClient(path=str(CHROMA_DB_PATH))
-    collection = client.get_collection("compliance_docs")
-    
-    query_embedding = text_to_vector(query)
-    
-    print(f"caminho do banco: {CHROMA_DB_PATH.absolute()}")
-    print(f"Banco existe: {CHROMA_DB_PATH.exists()}")
-    print(f"total de chunks no banco: {collection.count()}")
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=n_results
+# Inicializa o cliente Azure OpenAI
+client = AzureOpenAI(
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    api_key=os.getenv("AZURE_OPENAI_KEY"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION")
+)
+
+# Nome do deployment de embedding
+EMBEDDING_MODEL = os.getenv("AZURE_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002")
+
+
+def get_embedding(text: str) -> list:
+    """Gera o embedding semântico de um texto usando o Azure OpenAI."""
+    response = client.embeddings.create(
+        model=EMBEDDING_MODEL,
+        input=text
     )
-    
-    chunks = []
-    for i in range(len(results["documents"][0])):
-        chunks.append({
-            "content": results["documents"][0][i],
-            "source": results["metadatas"][0][i]["source"],
-            "chunk_id": results["metadatas"][0][i]["chunk_id"],
-            "distance": results["distances"][0][i]
-        })
-    
-    return chunks
+    return response.data[0].embedding
+
+
+def cosine_similarity(a, b):
+    """Calcula a similaridade cosseno entre dois vetores."""
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
+def retrieve(query: str, n_results: int = 3) -> list[dict]:
+    """Busca os chunks mais relevantes para a query usando similaridade semântica."""
+    try:
+        print(f"Procurando em: {DATA_PATH.absolute()}")
+        print(f"chunks.pkl existe: {(DATA_PATH / 'chunks.pkl').exists()}")
+        print(f"embeddings.npy existe: {(DATA_PATH / 'embeddings.npy').exists()}")
+
+        # Carrega os chunks e metadados salvos pela ingestão
+        with open(DATA_PATH / "chunks.pkl", "rb") as f:
+            data = pickle.load(f)
+
+        # Carrega os embeddings pré-calculados
+        embeddings = np.load(str(DATA_PATH / "embeddings.npy"))
+
+        # Gera o embedding da query em tempo real
+        query_embedding = np.array(get_embedding(query))
+
+        # Calcula a similaridade da query com cada chunk
+        similarities = [cosine_similarity(query_embedding, emb) for emb in embeddings]
+
+        # Ordena e pega os N chunks mais similares
+        top_indices = np.argsort(similarities)[::-1][:n_results]
+
+        chunks = []
+        for i in top_indices:
+            chunk = data["metadata"][i].copy()
+            chunk["distance"] = float(1 - similarities[i])
+            chunks.append(chunk)
+
+        return chunks
+
+    except Exception as e:
+        print(f"Erro no retrieve: {e}")
+        import traceback
+        traceback.print_exc()
+        return []

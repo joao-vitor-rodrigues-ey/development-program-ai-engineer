@@ -1,47 +1,62 @@
+import re
 from src.core.llm_client import AzureModel
 from src.core.exceptions import APIConectionError
 from src.api.schemas.analysis import AnalysisResponse
 from src.rag.retrieval import retrieve
+from src.rag.reranker import simple_rerank
 
-def analyze_text(text_to_analyze :str) -> AnalysisResponse:
+
+def analyze_text(text_to_analyze: str) -> AnalysisResponse:
     """Analisa uma recomendação de investimento usando RAG + LLM."""
 
-    #busca os chunks mais relevantes da knowledge base
-    
+    # Busca os chunks mais relevantes da knowledge base
     relevant_chunks = retrieve(text_to_analyze, n_results=3)
+    
+    # Reordena por relevância
+    relevant_chunks = simple_rerank(text_to_analyze, relevant_chunks)
 
     # Monta o contexto com os documentos recuperados
-    context = "/n/n".join([
-        f"Fonte: {chunk['source']} /n{chunk['content']}"
+    context = "\n\n".join([
+        f"Fonte: {chunk['source']}\n{chunk['content'][:300]}"
         for chunk in relevant_chunks
     ])
 
     # Extrai as fontes usadas
-    sources = list(set({chunk['source'] for chunk in relevant_chunks}))
+    sources = list({chunk['source'] for chunk in relevant_chunks})
 
-    #instancia o cliente LLM
+    # Instancia o cliente LLM
     llm_client = AzureModel()
 
-    # Prompt enriquecido com contexto das politicas
+    # Prompt enriquecido com contexto das políticas
     prompt = f"""
     Você é um analista de compliance financeiro.
     Com base nos seguintes documentos de política:
     {context}
 
-    analisa a seguinte recomendação de investimento: '{text_to_analyze}'.
-    Verifique se ela est[a em conformidade com as politicas acima.
-    retorne sua análise explicando o motivo e cite os produtos mencionados.
+    Analise a seguinte recomendação de investimento: '{text_to_analyze}'.
+    Verifique se ela está em conformidade com as políticas acima.
+    Retorne sua análise explicando o motivo e cite os produtos mencionados.
+    Seja objetivo e conciso.
     """
 
-    try: 
+    try:
         response = llm_client.invoke(prompt=prompt)
         raw_content = response.choices[0].message.content
 
+        # Limpa formatação markdown da resposta
+        clean_content = raw_content
+        clean_content = re.sub(r'\*+', '', clean_content)
+        clean_content = re.sub(r'#{1,6}\s', '', clean_content)
+        clean_content = re.sub(r'-{3,}', '', clean_content)
+        clean_content = re.sub(r'\n{3,}', '\n\n', clean_content)
+        clean_content = clean_content.strip()
+
         return AnalysisResponse(
-        is_compliant= "não" not in raw_content.lower(),
-        reason=raw_content,
-        mentioned_products=sources,
-        source_chunk_id=[chunk['chunk_id'] for chunk in relevant_chunks]
+            is_compliant="não" not in clean_content.lower(),
+            reason=clean_content,
+            mentioned_products=sources,
+            source_documents=sources,
+            source_chunk_id=[chunk['chunk_id'] for chunk in relevant_chunks]
         )
 
     except Exception as e:
