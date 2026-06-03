@@ -78,7 +78,7 @@ class AzureModel:
                 model=self.deployment,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=self.temperature,
-                max_tokens=max_tokens or self.max_tokens,
+                # max_tokens=max_tokens or self.max_tokens,
             )
             logger.info("Resposta recebida do modelo.")
             return response
