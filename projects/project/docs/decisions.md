@@ -24,5 +24,5 @@ Pydantic garante que os contratos de request e response sejam validados automati
  ## Re-ranking por palavras-chave
  Implementamos um re-ranker simples baseado em contagem de palavras-chave em comum entre a query e o chunk, Essa abordagem nao requer modelo externo e demonstra o conceito de re-ranking de forma auditável e transparente.
 
- ##Stritct Grounding 
+ ## Stritct Grounding 
  O prompt foi estruturado para forçar o LLM a basear sua análise exclusivamente nos documentos recuperados, garantindo que as decisões sejam sempre rastreáveis às politicas oficiais.a
