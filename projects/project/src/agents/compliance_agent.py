@@ -42,7 +42,6 @@ class AgentState(TypedDict):
     error: str
 
 def read_document(state: AgentState) -> AgentState:
-    """Lê o conteúdo do arquivo de recomendação"""
     start = time.time()
     filename = state["filename"]
     filepath = INPUT_PATH / filename
@@ -50,8 +49,15 @@ def read_document(state: AgentState) -> AgentState:
     logger.info(f"[{filename}] Iniciando leitura do documento...")
 
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
+        # Tenta UTF-8 primeiro, depois UTF-16
+        for encoding in ["utf-8", "utf-16", "latin-1"]:
+            try:
+                with open(filepath, "r", encoding=encoding) as f:
+                    content = f.read()
+                break
+            except UnicodeDecodeError:
+                continue
+
         logger.info(f"[{filename}] Documento lido com sucesso ({len(content)} caracteres)")
         return {**state, "content": content, "processing_time": time.time() - start}
     except Exception as e:

@@ -1,0 +1,25 @@
+ALERTA DE NÃO CONFORMIDADE
+Arquivo: recomendacao_04_conforme.txt
+Data: 2026-06-08 09:10:32
+Motivo: A recomendação está em conformidade com as políticas apresentadas.
+
+Motivos:
+
+1. Perfil Moderado  
+   - Pelos trechos da política de “análise de perfil do investidor” e da “política de adequação de investimento”, o investidor moderado:
+     - Tem tolerância média a risco.
+     - Pode investir em todos os produtos do perfil conservador.
+     - Pode investir em fundos multimercado com risco/volatilidade controlados.  
+   - A recomendação de “fundos multimercado de baixa volatilidade” se enquadra em “fundos multimercado com risco controlado”, portanto é adequada ao perfil moderado.
+
+2. Conformidade com restrições  
+   - Não há indicação de produtos restritos ao perfil moderado (como derivativos especulativos, criptoativos, ações diretas ou investimentos no exterior).
+   - A alocação em renda fixa (60%) é compatível com a busca de proteção de parte do patrimônio, coerente com o perfil moderado descrito.
+
+3. Proporção de risco  
+   - A carteira proposta (60% renda fixa / 40% multimercado de baixa volatilidade) mantém predominância em ativos de baixo risco, com uma parcela em risco moderado, alinhada à “tolerância a flutuações de curto prazo e pequenas perdas” do perfil moderado.
+
+Conclusão: A recomendação é adequada e está em conformidade com as políticas de adequação ao perfil moderado e com as diretrizes gerais da ANBIMA sobre classificação de perfis e produtos.
+
+PRODUTOS: renda fixa, fundos multimercado de baixa volatilidade
+Fontes: ['anbima_codigo_distribuicao_produtos_Investimento.pdf', 'politica_adequacao_investimento_v1.2.txt', 'politica_investimento_agressivo_v1.0.txt', 'analise_de_perfil_do_investidor.txt']
