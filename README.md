@@ -1,20 +1,31 @@
 # Development Program AI Engineer
 
-API REST de análise de compliance financeiro com RAG (Retrieval-Augmented Generation), construída como parte do programa de desenvolvimento interno da EY.
+API REST de análise de compliance financeiro com RAG (Retrieval-Augmented Generation) e agente autônomo, construída como parte do programa de desenvolvimento interno da EY.
 
 ## Sobre o Projeto
 
-O sistema simula um analista de compliance financeiro. Ele recebe uma recomendação de investimento, busca trechos relevantes da base de conhecimento oficial e usa um LLM (Azure OpenAI) para analisar se a recomendação está em conformidade com as políticas internas.
+O sistema simula um analista de compliance financeiro. Ele recebe uma recomendação de investimento, busca trechos relevantes da base de conhecimento oficial usando embeddings semânticos do Azure OpenAI, e usa um LLM para analisar se a recomendação está em conformidade com as políticas internas.
 
 ## Arquitetura
 
+### Via API (modo interativo)
 ```
 Cliente → POST /analyze
-    → Busca chunks relevantes no ChromaDB
+    → Busca semântica (Azure Embeddings)
     → Re-ranking por relevância
-    → Prompt enriquecido com contexto das políticas
-    → Azure OpenAI analisa
+    → Prompt enriquecido com contexto
+    → Azure OpenAI (gpt-4o)
     → Resposta com conformidade + fontes citadas
+```
+
+### Via Agente (modo autônomo)
+```
+data/input/recomendacao.txt
+    → Leitura do documento
+    → Análise RAG + LLM
+    → Decisão (compliant?)
+        → Sim: data/output/approved/
+        → Não: data/output/rejected_for_review/ + alerta
 ```
 
 ## Estrutura do Repositório
@@ -23,7 +34,7 @@ Cliente → POST /analyze
 development-program-ai-engineer/
 ├── projects/
 │   └── project/
-│       ├── .env                          # Credenciais Azure OpenAI (não versionado)
+│       ├── .env
 │       ├── .gitignore
 │       ├── Dockerfile
 │       ├── README.md
@@ -33,7 +44,14 @@ development-program-ai-engineer/
 │       │   ├── email_analise_cliente_01.txt
 │       │   ├── manual_comunicacao_cliente_v1.0.txt
 │       │   ├── politica_adequacao_investimento_v1.2.txt
-│       │   └── politica_investimento_agressivo_v1.0.txt
+│       │   ├── politica_investimento_agressivo_v1.0.txt
+│       │   └── anbima_codigo_distribuicao_produtos_Investimento.pdf
+│       ├── data/
+│       │   ├── input/               ← coloca arquivos aqui para o agente processar
+│       │   ├── output/
+│       │   │   ├── approved/        ← documentos conformes
+│       │   │   └── rejected_for_review/  ← documentos para revisão
+│       │   └── logs/                ← logs e métricas do agente
 │       ├── notebooks/
 │       │   └── rag_evaluation.ipynb
 │       ├── src/
@@ -46,15 +64,15 @@ development-program-ai-engineer/
 │       │   │   ├── ingestion.py
 │       │   │   ├── retrieval.py
 │       │   │   └── reranker.py
+│       │   ├── agents/
+│       │   │   ├── compliance_agent.py
+│       │   │   ├── monitor.py
+│       │   │   └── metrics.py
 │       │   └── services/
 │       │       └── compliance_service.py
-│       ├── tests/
-│       │   ├── test_api.py
-│       │   └── test_services.py
-│       └── docs/
-│           ├── architecture.md
-│           ├── decisions.md
-│           └── SDD.md
+│       └── tests/
+│           ├── test_api.py
+│           └── test_services.py
 └── apresentation/
 ```
 
@@ -76,12 +94,13 @@ pip install -r requirements.txt
 AZURE_OPENAI_ENDPOINT="seu-endpoint"
 AZURE_OPENAI_KEY="sua-chave"
 AZURE_OPENAI_API_VERSION="2024-06-01"
-AZURE_DEPLOYMENT_NAME="seu-deployment"
+AZURE_DEPLOYMENT_NAME="gpt-4o"
+AZURE_EMBEDDING_DEPLOYMENT="text-embedding-ada-002"
 ```
 
 ### 3. Rodar a ingestão
 ```bash
-python projects/project/src/rag/ingestion.py
+python src/rag/ingestion.py
 ```
 
 ### 4. Subir a API
@@ -107,7 +126,6 @@ docker run -p 8000:8000 --env-file .env compliance-checker
 ```
 
 ### POST /analyze
-
 **Request:**
 ```json
 {
@@ -119,11 +137,50 @@ docker run -p 8000:8000 --env-file .env compliance-checker
 ```json
 {
   "is_compliant": false,
-  "reason": "A recomendação não está em conformidade com as políticas...",
-  "mentioned_products": ["politica_adequacao_investimento_v1.2.txt"],
-  "source_documents": ["politica_adequacao_investimento_v1.2.txt"]
+  "reason": "A recomendação não está em conformidade...",
+  "mentioned_products": ["ações de alto risco"],
+  "source_documents": ["politica_adequacao_investimento_v1.2.txt"],
+  "source_chunk_id": [0, 2, 1],
+  "rerank_score": [6, 5, 4]
 }
 ```
+
+### POST /agent/process/{filename}
+Dispara o agente para processar um arquivo da pasta `data/input/`.
+
+### GET /agent/metrics
+Retorna métricas de automação do agente.
+
+## Agente Autônomo
+
+### Processar um arquivo específico
+```bash
+python -c "from src.agents.compliance_agent import run_agent; run_agent('recomendacao.txt')"
+```
+
+### Iniciar o monitor automático
+```bash
+python src/agents/monitor.py
+```
+
+### Fluxo do agente (LangGraph)
+```
+(START) → read_document → analyze_document → [decide_action]
+    → approve  → approve_document  → (END)
+    → reject   → reject_document   → (END)
+    → error    → handle_error      → (END)
+```
+
+## Indicador de Automação
+
+| Métrica | Antes | Depois |
+|---|---|---|
+| Processo de análise | 100% manual | 95% automatizado |
+| Tempo por recomendação | ~15 min | ~30 segundos |
+| Capacidade diária | ~30 análises | ~960 análises |
+| Intervenção humana | 100% dos casos | apenas casos rejeitados |
+
+Estimativa: redução de **~6 horas de trabalho manual por dia** para equipes que processam 30 recomendações diárias.
 
 ## Testes
 ```bash
@@ -139,15 +196,22 @@ python -m jupyter notebook
 
 Abre o notebook `notebooks/rag_evaluation.ipynb`.
 
+**Resultados obtidos com embedding semântico Azure:**
+- MRR antes do re-ranking: 0.444
+- MRR depois do re-ranking: 0.833
+- Melhoria: **87.5%**
+
 ## Tecnologias
 | Tecnologia | Uso |
 |---|---|
 | Python 3.11 | Linguagem principal |
 | FastAPI | Framework da API |
 | Pydantic | Validação de dados |
-| Azure OpenAI | LLM para análise de compliance |
-| ChromaDB | Banco de dados vetorial local |
-| Instructor | Extração de dados estruturados |
+| Azure OpenAI (gpt-4o) | LLM para análise de compliance |
+| Azure OpenAI (text-embedding-ada-002) | Embeddings semânticos |
+| ChromaDB | Banco de dados vetorial (ingestão) |
+| LangGraph | Orquestração do agente autônomo |
+| watchdog | Monitoramento de pasta |
 | pytest | Testes automatizados |
 | Docker | Containerização |
 

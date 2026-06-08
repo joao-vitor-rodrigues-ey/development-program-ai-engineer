@@ -1,47 +1,85 @@
-# Arquitetura
+```markdown
+# Arquitetura - Compliance Checker API
 
-*Esta documentação descreverá a arquitetura de alto nível da solução.*
-## Visão Geral 
-O compliance Checker é uma API REST que recebe recomendações de investimento e utiliza um LLM (Azure OpenAI) para analisar se estão em conformidade com as politicas de investimento 
+## Visão Geral
+O Compliance Checker é um sistema completo de análise de compliance financeiro com três camadas: API REST, pipeline RAG e agente autônomo. As análises são baseadas em documentos oficiais de política, garantindo rastreabilidade e auditabilidade.
 
-## Fluxo de dados
-Cliente → POST /analyze -> main.py -> compliance_service.py 
--> retrieve() busca chunks no ChromaDB
--> simple_rerank() reordena por relevância
--> prompt enriquecido com contexto
--> AzureModel (LLM)
--> AnalysisResponse com fontes
--> Cliente
+## Fluxo Completo do Sistema
 
-## Pipeline de ingestão
-knowledge_base/*.txt -> ingestion.py -> chunking-> embeddings -> ChromaDB
+### Via API (modo interativo)
+```
+Cliente → POST /analyze
+    → Busca semântica no banco vetorial (Azure Embeddings)
+    → Re-ranking por relevância
+    → Prompt enriquecido com contexto das políticas
+    → Azure OpenAI (gpt-4o)
+    → AnalysisResponse com fontes e chunk IDs
+```
+
+### Via Agente (modo autônomo)
+```
+data/input/recomendacao.txt
+    → read_document
+    → analyze_document (RAG + LLM)
+    → decide_action (is_compliant?)
+        → approved: data/output/approved/
+        → rejected: data/output/rejected_for_review/ + alerta em data/logs/
+
+```
+
+## Pipeline de Ingestão
+```
+knowledge_base/*.txt + *.pdf
+    → load_documents
+    → chunk_text (500 chars, overlap 50)
+    → get_embedding (Azure text-embedding-ada-002)
+    → salva embeddings.npy + chunks.pkl
+```
+
+## Grafo de Estados do Agente (LangGraph)
+```
+(START)
+    → read_document
+    → analyze_document
+    → [decide_action]
+        → "approve"       → approve_document → (END)
+        → "reject"        → reject_document  → (END)
+        → "handle_error"  → handle_error     → (END)
+```
 
 ## Camadas
 
-## API Layer (`src/api/`)
-Recebe e valida as requisições HTTP. Os schemas Pydantic em `src/api/schemas/analysis.py` definem os contratos de dados, agora incluindo `source_documents`.
+### API Layer (`src/api/`)
+Recebe e valida requisições HTTP. Schemas Pydantic em `src/api/schemas/analysis.py` definem os contratos de dados incluindo `source_documents`, `source_chunk_id` e `rerank_score`.
 
-## Service Layer (`src/services/`)
-Orquestra o fluxo RAG: recupera chunks relevantes, aplica re-ranking e monta o prompt enriquecido antes de chamar o LLM.
+### Service Layer (`src/services/`)
+Orquestra o fluxo RAG: recupera chunks, aplica re-ranking, monta prompt enriquecido e chama o LLM.
 
-## RAG Layer (`src/rag/`)
-Responsável por toda a lógica de recuperação de informação.
-- `ingestion.py` — lê os documentos, divide em chunks e armazena no ChromaDB
-- `retrieval.py` — converte a query em embedding e busca os chunks mais próximos
-- `reranker.py` — reordena os chunks por relevância usando palavras-chave
+### RAG Layer (`src/rag/`)
+- `ingestion.py` — lê documentos, divide em chunks e gera embeddings semânticos via Azure
+- `retrieval.py` — busca por similaridade cosseno usando embeddings pré-calculados
+- `reranker.py` — re-ranking por palavras-chave em comum com a query
 
-## Core Layer (`src/core/`)
-Centraliza a configuração do cliente Azure OpenAI e as exceções customizadas.
+### Agents Layer (`src/agents/`)
+- `compliance_agent.py` — grafo LangGraph com os nós de processamento
+- `monitor.py` — monitora `data/input/` com watchdog e dispara o agente
+- `metrics.py` — registra e calcula métricas de automação
+
+### Core Layer (`src/core/`)
+Cliente Azure OpenAI (`llm_client.py`) e exceções customizadas (`exceptions.py`).
 
 ## Componentes
 | Componente | Responsabilidade |
 |---|---|
-| `main.py` | Ponto de entrada da API |
+| `main.py` | Endpoints da API + endpoints do agente |
 | `api/schemas/analysis.py` | Contratos de request e response |
 | `services/compliance_service.py` | Orquestra RAG + LLM |
 | `rag/ingestion.py` | Pipeline de ingestão de documentos |
-| `rag/retrieval.py` | Busca vetorial no ChromaDB |
-| `rag/reranker.py` | Re-ranking por relevância |
+| `rag/retrieval.py` | Busca semântica por similaridade cosseno |
+| `rag/reranker.py` | Re-ranking por palavras-chave |
+| `agents/compliance_agent.py` | Agente autônomo LangGraph |
+| `agents/monitor.py` | Monitor de pasta com watchdog |
+| `agents/metrics.py` | Métricas de automação |
 | `core/llm_client.py` | Conexão com Azure OpenAI |
 | `core/exceptions.py` | Exceções customizadas |
 
@@ -53,3 +91,7 @@ Centraliza a configuração do cliente Azure OpenAI e as exceções customizadas
 | `manual_comunicacao_cliente_v1.0.txt` | Regras de comunicação |
 | `politica_adequacao_investimento_v1.2.txt` | Política de adequação de produtos |
 | `politica_investimento_agressivo_v1.0.txt` | Política para perfil agressivo |
+| `anbima_codigo_distribuicao_produtos_Investimento.pdf` | Código ANBIMA de distribuição |
+```
+
+---
