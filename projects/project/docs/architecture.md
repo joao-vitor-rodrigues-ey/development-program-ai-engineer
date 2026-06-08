@@ -1,5 +1,3 @@
-**`docs/architecture.md`** — substitui tudo:
-
 ```markdown
 # Arquitetura - Compliance Checker API
 
