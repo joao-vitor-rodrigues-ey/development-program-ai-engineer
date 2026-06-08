@@ -4,7 +4,9 @@ import numpy as np
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import AzureOpenAI
-import time 
+import time
+
+from pypdf import PdfReader 
 
 # Carrega as variáveis de ambiente do .env
 load_dotenv()
@@ -32,9 +34,9 @@ def get_embedding(text: str) -> list:
     )
     return response.data[0].embedding
 
-
+# pegar os documentos novos
 def load_documents() -> list[dict]:
-    """Lê todos os TXTs da pasta knowledge_base e retorna lista de documentos."""
+    """Lê todos os TXTs e PDFsa pasta knowledge_base e retorna lista de documentos."""
     documents = []
     for txt_file in KNOWLEDGE_BASE_PATH.glob("*.txt"):
         with open(txt_file, "r", encoding="utf-8") as f:
@@ -44,6 +46,18 @@ def load_documents() -> list[dict]:
             "content": text
         })
         print(f"Carregado: {txt_file.name}")
+
+    for pdf_file in KNOWLEDGE_BASE_PATH.glob("*.pdf"):    
+        reader = PdfReader(pdf_file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        documents.append({
+            "filename": pdf_file.name,
+            "content": text
+        })
+        print(f"Carregado: {pdf_file.name}")
+
     return documents
 
 

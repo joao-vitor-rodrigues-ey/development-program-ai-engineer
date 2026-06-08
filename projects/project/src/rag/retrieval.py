@@ -36,7 +36,7 @@ def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
-def retrieve(query: str, n_results: int = 3) -> list[dict]:
+def retrieve(query: str, n_results: int = 5) -> list[dict]:
     """Busca os chunks mais relevantes para a query usando similaridade semântica."""
     try:
         print(f"Procurando em: {DATA_PATH.absolute()}")

@@ -11,4 +11,5 @@ class AnalysisResponse(BaseModel):
     reason:     str = Field(...,description="Justificativa detalhada da análise.")
     mentioned_products: List[str] = Field(...,description="Lista de produtos mencionados .")
     source_documents: List[str] = Field(...,description="Lista de documentos da base de conhecimento usados na análise.")
-    source_chunk_id: List[int] = Field([], description="IDs dos chunks da base de conhecimento usados na análise.")
+    source_chunk_id: List[int] = Field([], description="IDs dos chunks da base de conhecimento usados na análise."),
+    rerank_score: List[float] = Field([], description="Scores de relevância após reordenação dos chunks.")

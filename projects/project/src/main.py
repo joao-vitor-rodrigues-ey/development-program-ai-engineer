@@ -1,17 +1,25 @@
-from fastapi import FastAPI, HTTPException
+import logging
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from src.api.schemas.analysis import AnalysisRequest, AnalysisResponse
 from src.services.compliance_service import analyze_text
 from src.core.exceptions import APIConectionError
- 
-app= FastAPI()
-# Endpoint de Health check, verifica se a API está no ar
+from src.agents.compliance_agent import run_agent
+from src.agents.metrics import print_report, load_metrics
+
+app = FastAPI()
+
+logger = logging.getLogger(__name__)
+
+
 @app.get("/health")
 def health():
-    return {"status":"ok"}
+    """Verifica se a API está no ar."""
+    return {"status": "ok"}
 
-# Endpoint principal de análise, recebe um texto e retorna a análise de conformidade
+
 @app.post("/analyze", response_model=AnalysisResponse)
-async def analyze_recomendation(request: AnalysisRequest):
+async def analyze_recommendation(request: AnalysisRequest):
+    """Analisa uma recomendação de investimento via RAG + LLM."""
     try:
         result = analyze_text(request.text_to_analyze)
         if not result:
@@ -20,5 +28,17 @@ async def analyze_recomendation(request: AnalysisRequest):
     except APIConectionError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ocorreu um erro interno no servidor.")
-    
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor.")
+
+
+@app.post("/agent/process/{filename}")
+async def process_document(filename: str, background_tasks: BackgroundTasks):
+    """Dispara o agente para processar um arquivo da pasta data/input/."""
+    background_tasks.add_task(run_agent, filename)
+    return {"message": f"Processamento de '{filename}' iniciado em background."}
+
+
+@app.get("/agent/metrics")
+def get_metrics():
+    """Retorna as métricas de automação do agente."""
+    return load_metrics()
