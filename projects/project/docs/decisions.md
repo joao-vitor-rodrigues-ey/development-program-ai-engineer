@@ -26,3 +26,23 @@ Pydantic garante que os contratos de request e response sejam validados automati
 
  ## Stritct Grounding 
  O prompt foi estruturado para forçar o LLM a basear sua análise exclusivamente nos documentos recuperados, garantindo que as decisões sejam sempre rastreáveis às politicas oficiais.a
+
+ 
+ ## LangGraph para orquestração do agente
+ Escolhemos LangGraph por permitir modelar o fluxo do agente como um grafo de estados explícito e auditável. Cada nó representa uma ação e as transições são condicionais   baseadas no resultado da análise.
+ 
+ ## Watchdog para monitoramento de pasta
+ Usamos a biblioteca `watchdog` para monitorar a pasta `data/input/` em tempo real. Quando um novo arquivo `.txt` é detectado, o agente é disparado automaticamente sem polling.
+ 
+ ## Heurística de conformidade por keywords
+ Em vez de verificar apenas a presença da palavra "não", usamos uma lista de frases específicas de não conformidade para classificar o resultado do LLM. Isso evita falsos negativos causados por frases como "não há produtos restritos".
+ 
+ ## Logging estruturado
+ Todos os passos do agente são logados com timestamp, nome do arquivo e ação tomada em `data/logs/agent.log`, permitindo rastrear cada decisão.
+ 
+ ## Métricas de automação
+ As métricas ficam em `data/logs/metrics.json` e são atualizadas a cada execução. O endpoint `GET /agent/metrics` expõe esses dados via API.
+ 
+ ## Azure Embeddings semânticos
+ Substituímos o embedding por caracteres (limitado) pelo modelo `text-embedding-ada-002` do Azure OpenAI. Isso aumentou o MRR de 0.444 para 0.833 — melhoria de 87.5% na qualidade da recuperação.
+ ```
