@@ -53,18 +53,29 @@ def analyze_text(text_to_analyze: str) -> AnalysisResponse:
         clean_content = re.sub(r'\n{3,}', '\n\n', clean_content)
         clean_content = clean_content.strip()
 
+        clean_content = clean_content.strip()
+
         products = re.findall(r'PRODUTOS:\s*(.*)', clean_content)
         print(f"Produtos extraídos: {products}")
-        mentioned = [p.strip() for p in products[0].split(',')]if products else []
-        
+        mentioned = [p.strip() for p in products[0].split(',')] if products else []
+
+        # Verifica conformidade de forma mais precisa
+        nao_conforme_keywords = [
+            "não está em conformidade",
+            "nao esta em conformidade",
+            "não está conforme",
+            "em desconformidade",
+            "não conforme"
+        ]
+        is_compliant = not any(kw in clean_content.lower() for kw in nao_conforme_keywords)
+
         return AnalysisResponse(
-            is_compliant="não" not in clean_content.lower(),
+            is_compliant=is_compliant,
             reason=clean_content,
             mentioned_products=mentioned,
             source_documents=sources,
             source_chunk_id=[chunk['chunk_id'] for chunk in relevant_chunks],
             rerank_score=[chunk.get('rerank_score', 0) for chunk in relevant_chunks]
-
         )
 
     except Exception as e:
