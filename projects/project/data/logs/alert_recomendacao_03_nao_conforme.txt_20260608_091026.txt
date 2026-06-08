@@ -1,0 +1,18 @@
+ALERTA DE NÃO CONFORMIDADE
+Arquivo: recomendacao_03_nao_conforme.txt
+Data: 2026-06-08 09:10:26
+Motivo: A recomendação NÃO está em conformidade com as políticas apresentadas, por dois motivos principais:
+
+1. Limite de exposição a criptoativos (política de investimento agressivo)  
+   - A política estabelece que criptoativos, direta ou indiretamente, não devem ultrapassar 5% do portfólio total, mesmo para perfil agressivo.  
+   - A recomendação sugere 80% em criptoativos e derivativos, o que viola claramente esse limite, pois a parcela em criptoativos já excederia, por si só, o teto de 5%.
+
+2. Inadequação ao perfil do cliente moderado (política de adequação)  
+   - Produtos como derivativos e criptoativos são classificados como Risco Alto.  
+   - Para cliente moderado, a política indica produtos de risco controlado, com tolerância a alguma volatilidade, mas não a concentração extrema em ativos de alto risco.  
+   - Concentrar 80% do patrimônio em criptoativos e derivativos, com objetivo de “retorno rápido”, configura estratégia altamente especulativa, incompatível com o perfil moderado e com a noção de “especulação controlada” prevista na política.
+
+Portanto, a recomendação é inadequada tanto por descumprir o limite máximo de exposição a criptoativos quanto por não respeitar a matriz de adequação ao perfil moderado.
+
+PRODUTOS: criptoativos, derivativos
+Fontes: ['politica_adequacao_investimento_v1.2.txt', 'politica_investimento_agressivo_v1.0.txt', 'analise_de_perfil_do_investidor.txt']

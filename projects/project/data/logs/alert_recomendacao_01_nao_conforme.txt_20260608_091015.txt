@@ -1,0 +1,23 @@
+ALERTA DE NÃO CONFORMIDADE
+Arquivo: recomendacao_01_nao_conforme.txt
+Data: 2026-06-08 09:10:15
+Motivo: Análise de Conformidade:
+
+A recomendação de investir em "ações de alto risco" para um cliente com perfil conservador está em não conformidade com as políticas mencionadas. 
+
+De acordo com os documentos analisados:
+
+1. Perfil Conservador:
+   - Prioriza proteção do patrimônio, baixa tolerância a risco e busca produtos de baixo risco.
+   - Produtos adequados incluem Tesouro Selic, CDBs, e fundos de renda fixa com risco baixo.
+
+2. Perfil de Investidor e ANBIMA:
+   - Clientes conservadores não aceitam grandes flutuações ou perdas significativas, sendo incompatível com ações de alto risco.
+
+3. Política de Adequação:
+   - Ações de alto risco são classificadas como produtos para perfis agressivos ou com alta tolerância a risco, não sendo adequadas para investidores conservadores.
+
+Portanto, a recomendação viola as diretrizes de adequação ao perfil do cliente e expõe o investidor a riscos incompatíveis com sua tolerância.
+
+PRODUTOS: ações de alto risco
+Fontes: ['anbima_codigo_distribuicao_produtos_Investimento.pdf', 'politica_adequacao_investimento_v1.2.txt', 'analise_de_perfil_do_investidor.txt']

@@ -45,4 +45,4 @@ Pydantic garante que os contratos de request e response sejam validados automati
  
  ## Azure Embeddings semânticos
  Substituímos o embedding por caracteres (limitado) pelo modelo `text-embedding-ada-002` do Azure OpenAI. Isso aumentou o MRR de 0.444 para 0.833 — melhoria de 87.5% na qualidade da recuperação.
- ```
+ ``` 

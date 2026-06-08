@@ -1,0 +1,18 @@
+ALERTA DE NÃO CONFORMIDADE
+Arquivo: teste.txt
+Data: 2026-06-08 09:58:41
+Motivo: A recomendação não está em conformidade com as políticas apresentadas.
+
+Pelos trechos da análise de perfil do investidor, o investidor com perfil conservador:
+- Prioriza preservação do capital e segurança.
+- Tem tolerância a risco muito baixa, não tolerando perdas, mesmo temporárias.
+- Tem como produtos adequados: Tesouro Selic e outros produtos de risco baixo.
+
+Já o perfil agressivo (política_adequacao_investimento_v1.2.txt) é o que admite alta tolerância a risco e compreensão de perdas significativas, sendo este o perfil compatível com ações de alto risco, não o conservador.
+
+Além disso, o código ANBIMA exige que a instituição classifique o cliente em perfis de risco e distribua produtos compatíveis com esse perfil. Oferecer ações de alto risco a um cliente conservador contraria o princípio de adequação do produto ao perfil do investidor.
+
+Portanto, recomendar “ações de alto risco” para um cliente com perfil conservador é inadequado e em desconformidade com as políticas de adequação e com as diretrizes da ANBIMA.
+
+PRODUTOS: ações de alto risco
+Fontes: ['anbima_codigo_distribuicao_produtos_Investimento.pdf', 'analise_de_perfil_do_investidor.txt', 'politica_adequacao_investimento_v1.2.txt']

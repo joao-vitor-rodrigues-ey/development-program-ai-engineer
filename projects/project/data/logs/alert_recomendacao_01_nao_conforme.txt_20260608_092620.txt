@@ -1,0 +1,13 @@
+ALERTA DE NÃO CONFORMIDADE
+Arquivo: recomendacao_01_nao_conforme.txt
+Data: 2026-06-08 09:26:20
+Motivo: A recomendação NÃO está em conformidade com as políticas apresentadas.
+
+Motivos:
+- Pelas políticas internas e pelo Código ANBIMA, clientes com perfil conservador têm baixa tolerância a risco, baixo conhecimento em investimentos e priorizam preservação de capital e produtos de baixo risco.
+- As políticas indicam que produtos de maior risco (como ações de alto risco) são adequados apenas para perfis com maior tolerância a risco (moderado/agressivo), não para conservadores.
+- A recomendação de “ações de alto risco” para um cliente conservador contraria diretamente o princípio de adequação do produto ao perfil do investidor.
+- A expressão “Oportunidade única e imperdível” tem caráter promocional/excessivamente persuasivo, o que também é incompatível com boas práticas de suitability e comunicação responsável.
+
+PRODUTOS: ações de alto risco
+Fontes: ['politica_adequacao_investimento_v1.2.txt', 'anbima_codigo_distribuicao_produtos_Investimento.pdf', 'analise_de_perfil_do_investidor.txt']
