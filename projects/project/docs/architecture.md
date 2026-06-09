@@ -1,4 +1,3 @@
-```markdown
 # Arquitetura - Compliance Checker API
 
 ## Visão Geral
