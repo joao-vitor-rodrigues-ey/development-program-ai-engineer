@@ -35,3 +35,8 @@ docker-compose.yml
 *.swp
 *.swo
 *~
+
+#Dados do agente
+data/input
+data/output
+data/logs/

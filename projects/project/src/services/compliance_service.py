@@ -1,12 +1,12 @@
 import re
 from src.core.llm_client import AzureModel
 from src.core.exceptions import APIConectionError
-from src.api.schemas.analysis import AnalysisResponse
+from src.api.schemas.analysis import AnalysisResponse, PerfilCliente
 from src.rag.retrieval import retrieve
 from src.rag.reranker import simple_rerank
 
 
-def analyze_text(text_to_analyze: str) -> AnalysisResponse:
+def analyze_text(text_to_analyze: str, perfil_cliente: str = "não informado") -> AnalysisResponse:
     """Analisa uma recomendação de investimento usando RAG + LLM."""
 
     # Busca os chunks mais relevantes da knowledge base
@@ -27,17 +27,25 @@ def analyze_text(text_to_analyze: str) -> AnalysisResponse:
     # Instancia o cliente LLM
     llm_client = AzureModel()
 
-    # Prompt enriquecido com contexto das políticas
+    # Prompt enriquecido com contexto das políticas e perfil do cliente
     prompt = f"""
-    Você é um analista de compliance financeiro.
+    Você é um analista de compliance financeiro da EY.
+    
+    O cliente possui perfil de investidor: {perfil_cliente.upper()}
+    
     Com base nos seguintes documentos de política:
     {context}
 
     Analise a seguinte recomendação de investimento: '{text_to_analyze}'.
-    Verifique se ela está em conformidade com as políticas acima.
+    
+    Considere especificamente:
+    - Se os produtos recomendados são adequados para o perfil {perfil_cliente}
+    - Se a recomendação respeita a tolerância a risco do perfil {perfil_cliente}
+    - Se está em conformidade com as políticas ANBIMA e internas da empresa
+    
     Retorne sua análise explicando o motivo e cite os produtos mencionados.
     Seja objetivo e conciso.
-    Ao final da análise, liste expllicitamente os produtos financeiros mencionados na recomendação no formato:
+    Ao final da análise, liste explicitamente os produtos financeiros mencionados no formato:
     PRODUTOS: produto1, produto2, produto3
     """
 
@@ -53,13 +61,11 @@ def analyze_text(text_to_analyze: str) -> AnalysisResponse:
         clean_content = re.sub(r'\n{3,}', '\n\n', clean_content)
         clean_content = clean_content.strip()
 
-        clean_content = clean_content.strip()
-
+        # Extrai produtos mencionados
         products = re.findall(r'PRODUTOS:\s*(.*)', clean_content)
-        print(f"Produtos extraídos: {products}")
         mentioned = [p.strip() for p in products[0].split(',')] if products else []
 
-        # Verifica conformidade de forma mais precisa
+        # Verifica conformidade por keywords
         nao_conforme_keywords = [
             "não está em conformidade",
             "nao esta em conformidade",
@@ -75,7 +81,8 @@ def analyze_text(text_to_analyze: str) -> AnalysisResponse:
             mentioned_products=mentioned,
             source_documents=sources,
             source_chunk_id=[chunk['chunk_id'] for chunk in relevant_chunks],
-            rerank_score=[chunk.get('rerank_score', 0) for chunk in relevant_chunks]
+            rerank_score=[chunk.get('rerank_score', 0) for chunk in relevant_chunks],
+            perfil_cliente=perfil_cliente
         )
 
     except Exception as e:

@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from src.api.schemas.analysis import AnalysisRequest, AnalysisResponse
 from src.services.compliance_service import analyze_text
 from src.core.exceptions import APIConectionError
@@ -7,6 +8,7 @@ from src.agents.compliance_agent import run_agent
 from src.agents.metrics import print_report, load_metrics
 
 app = FastAPI()
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ def health():
 async def analyze_recommendation(request: AnalysisRequest):
     """Analisa uma recomendação de investimento via RAG + LLM."""
     try:
-        result = analyze_text(request.text_to_analyze)
+        result = analyze_text(request.text_to_analyze, request.perfil_cliente)
         if not result:
             raise APIConectionError("Falha ao conectar com o serviço de análise.")
         return result
@@ -29,7 +31,6 @@ async def analyze_recommendation(request: AnalysisRequest):
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor.")
-
 
 @app.post("/agent/process/{filename}")
 async def process_document(filename: str, background_tasks: BackgroundTasks):
